@@ -4,15 +4,22 @@
 --
 -- http://svetlyak.ru/blog/lightroom-plugins/
 --
-local PluginVersion      = '0.1.1'
+local PluginVersion      = '0.2.0'
 local PluginContactName  = 'Alexander Artemenko'
 local PluginContactEmail = 'svetlyak.40wt@gmail.com'
 local PluginUrl          = 'http://svetlyak.ru/blog/lightroom-plugins/'
 
+local isDebug = true
+
 -- imports
+local LrHttp
+if isDebug then
+    LrHttp = require 'LrHttpDebug' { logging = true, trapping = true}
+else
+    LrHttp = import 'LrHttp'
+end
+
 local LrLogger = import 'LrLogger'
-local LrHttp = import 'LrHttp'
---local LrHttp      = require 'LrHttpDebug' { logging = true, trapping = true}
 local LrFileUtils = import 'LrFileUtils'
 local LrPathUtils = import 'LrPathUtils'
 local LrBinding = import 'LrBinding'
@@ -21,8 +28,6 @@ local LrView = import 'LrView'
 local LrDialogs = import 'LrDialogs'
 local LrErrors = import 'LrErrors'
 local LrMD5 = import 'LrMD5'
-
-local isDebug = false
 
 local logger = LrLogger('YaFotki')
 logger:enable('print')
@@ -346,8 +351,19 @@ function YaFotki.upload(exportContext, path, photo)
                 piece_size = file_size
             end
 
+            local client_xml = '<?xml version="1.0" encoding="utf-8"?><client-upload md5="' .. md5 .. '" cookie="' .. md5 .. sid .. '"><filename>' .. fileName .. '</filename><title>' .. title .. '</title><albumId>' .. tostring(p.selectedAlbum) .. '</albumId><copyright>0</copyright><tags>' .. tags .. '</tags>' ..
+            '<post2yaru>' .. tostring(p.ya_post2yaru) .. '</post2yaru>' ..
+            '<xxx>' .. tostring(p.ya_mxxx) .. '</xxx>' ..
+            '<disable_comments>' .. tostring(p.ya_disable_comments) .. '</disable_comments>' ..
+            '<hide_orig>' .. tostring(p.ya_mhide_orig) .. '</hide_orig>' ..
+            '<no_more_participation>' .. tostring(p.ya_no_more_participation) .. '</no_more_participation>' ..
+            '<access>' .. tostring(p.ya_access) .. '</access>' ..
+            '</client-upload>'
+
+            debug('client-xml: ' .. client_xml)
+
             local xml = io.open(xml_path, 'wb')
-            xml:write('<?xml version="1.0" encoding="utf-8"?><client-upload md5="' .. md5 .. '" cookie="' .. md5 .. sid .. '"><filename>' .. fileName .. '</filename><title>' .. title .. '</title><albumId>' .. tostring(p.selectedAlbum) .. '</albumId><copyright>0</copyright><tags>' .. tags .. '</tags></client-upload>')
+            xml:write(client_xml)
             xml:flush()
 
             -- PHOTO-START
