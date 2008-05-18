@@ -11,8 +11,8 @@ local PluginUrl          = 'http://svetlyak.ru/blog/lightroom-plugins/'
 
 -- imports
 local LrLogger = import 'LrLogger'
---local LrHttp = import 'LrHttp'
-local LrHttp      = require 'LrHttpDebug' { logging = true, trapping = true}
+local LrHttp = import 'LrHttp'
+--local LrHttp      = require 'LrHttpDebug' { logging = true, trapping = true}
 local LrFileUtils = import 'LrFileUtils'
 local LrPathUtils = import 'LrPathUtils'
 local LrBinding = import 'LrBinding'
@@ -22,7 +22,7 @@ local LrDialogs = import 'LrDialogs'
 local LrErrors = import 'LrErrors'
 local LrMD5 = import 'LrMD5'
 
-local isDebug = true
+local isDebug = false
 
 local logger = LrLogger('YaFotki')
 logger:enable('print')
@@ -30,7 +30,6 @@ local debug, info, warn, err, trace = logger:quick( 'debug', 'info', 'warn', 'er
 
 local YaFotki = {}
 
---local postUrl = 'http://img.fotki.yandex.ru/modify'
 local postUrl = 'http://up.fotki.yandex.ru/upload'
 local authUrl = 'https://passport.yandex.ru/passport?mode=auth&login=%s&passwd=%s&twoweeks=yes'
 local albumsUrl = 'http://fotki.yandex.ru/users/%s/albums/'
@@ -347,36 +346,6 @@ function YaFotki.upload(exportContext, path, photo)
                 piece_size = file_size
             end
 
-
-
-
---[[
-            local xml = io.open(xml_path, 'wb')
-            xml:write('<?xml version="1.0" encoding="utf-8"?>\n  <client-upload name="get-tags"/>')
-            xml:flush()
-
-            -- GET_ALBUMS
-            local mimeChunks = {
-                { name = 'query-type', value = 'photo-command' },
-                { name = 'command-xml', fileName = 'command.xml', filePath = xml_path, contentType = 'text/xml' },
-            }
-            debug( 'photo-albums: ' .. table2string(mimeChunks) )
-            local result, headers = LrHttp.postMultipart(postUrl, mimeChunks, p.ya_cookies)
-            if headers.status ~= 200 then
-                err( 'Error during upload, HTTP response: ' .. tostring(headers.status) )
-            end
-
-            if isDebug then
-                debug('Writing albums on the disk')
-                local f = io.open(LrPathUtils.child(tmp_path, 'albums.html'), 'wt')
-                f:write(result)
-                f:close()
-            end
-
-            xml:close()
-
-]]
-
             local xml = io.open(xml_path, 'wb')
             xml:write('<?xml version="1.0" encoding="utf-8"?><client-upload md5="' .. md5 .. '" cookie="' .. md5 .. sid .. '"><filename>' .. fileName .. '</filename><title>' .. title .. '</title><albumId>' .. tostring(p.selectedAlbum) .. '</albumId><copyright>0</copyright><tags>' .. tags .. '</tags></client-upload>')
             xml:flush()
@@ -399,8 +368,6 @@ function YaFotki.upload(exportContext, path, photo)
             debug('photo-start: ' .. result)
             cookie = result:match('cookie = "(%x+)"')
             debug('photo-start: cookie=' .. tostring(cookie))
-
---            p.ya_cookies = YaFotki.extractCookie(headers)
 
             if isDebug then
                 debug('Writing result on the disk')
@@ -455,7 +422,6 @@ function YaFotki.upload(exportContext, path, photo)
                 { name = 'query-type', value = 'photo-checksum' },
                 { name = 'cookie', value = cookie },
                 { name = 'size', value = tostring(piece_size) },
---                { name = 'size', value = '64000' },
             }
             debug( 'photo-checksum: ' .. table2string(mimeChunks) )
             local result, headers = LrHttp.postMultipart(url, mimeChunks, p.ya_cookies)
@@ -491,8 +457,8 @@ function YaFotki.upload(exportContext, path, photo)
             end
 
             -- CLEAN UP
-            --LrFileUtils.delete(xml_path)
-            --LrFileUtils.delete(frag_path)
+            LrFileUtils.delete(xml_path)
+            LrFileUtils.delete(frag_path)
         else
             debug('No cookies. Are you logged in?')
         end
@@ -574,7 +540,6 @@ function YaFotki.extractCookie(headers)
                             else
                                 cookie = cookie .. '; ' .. name .. '=' .. tostring(value)
                             end
-                            debug( '++++++++++++++++++++++ ' .. name .. ' = ' .. value .. '')
                         end
                     end
                 else
@@ -665,6 +630,3 @@ return {
     sectionsForTopOfDialog = YaFotki.exportDialog,
 }
 
---Cookie: yandexuid=21519061211141754; Virtual_id=48; yandex_login=alexander-artemenko; yandex_nickname=%c0%eb%e5%ea%f1%e0%ed%e4%f0; narod_login=alexander-artemenko; yandex_mail=alexander-artemenko; L=eFk9An8Nfkl+Q1dBblJ1e3ppdn9aRHFNJ1B/AllSBjwsBxM6Fnl4XncDTgwzODweEwAsFxd3MTUbAV4CASUjGQ==.1211141782.2914.297066.322bedf31e19ad4b1b74c18e402673e3; Session_id=1211141785.-276.0.13558447.2:31531321:18.49234.2193.6203df805306a759380816b7b5f5942d
-
---Virtual_id="48"; yandex_fio=""; yandex_login="alexander-artemenko"; yandex_nickname="%c0%eb%e5%ea%f1%e0%ed%e4%f0"; narod_login="alexander-artemenko"; yandex_mail="alexander-artemenko"; L="e1luAnAJfE9+TltBbVdyd3hpfHpfRnhFLBE8VwtYRCo0WwctECAoUjZKGQsmMTQDHAUnRlVuKT8AU1UVBSc5GQ==.1211142342.2914.236243.56dd33aaab7f1071ae8a63282c529b36"; Session_id="1211142342.0.3.13558447.2:31531321:18.49234.59632.21155c7cedc8fbc580807862640a2d1c"
