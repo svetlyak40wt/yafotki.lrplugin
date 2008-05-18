@@ -4,7 +4,7 @@
 --
 -- http://svetlyak.ru/blog/lightroom-plugins/
 --
-local PluginVersion      = '0.1.0'
+local PluginVersion      = '0.1.1'
 local PluginContactName  = 'Alexander Artemenko'
 local PluginContactEmail = 'svetlyak.40wt@gmail.com'
 local PluginUrl          = 'http://svetlyak.ru/blog/lightroom-plugins/'
@@ -181,7 +181,7 @@ function YaFotki.exportDialog(viewFactory, propertyTable)
                     size = "small",
                     title = PluginUrl,
                     action = function(button)
-                        LrHttp.openUrlInBrowser(PluginUrl)
+                        LrHttp.openUrlInBrowser('http://svetlyak.ru/count/r/1/')
                     end,
                 },
             },
@@ -320,6 +320,11 @@ function YaFotki.dropCookiesIfNeeded(propertyTable)
 end
 
 return {
+    hideSections = {
+        'exportLocation',
+        'postProcessing',
+    },
+    hidePrintResolution = true,
     exportPresetFields = {
         {key = 'ya_login', default = 'You login'},
         {key = 'ya_access', default = 'public'},
