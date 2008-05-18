@@ -134,7 +134,7 @@ function YaFotki.exportDialog(viewFactory, propertyTable)
         local bind = LrView.bind
         local f = viewFactory
 
-        propertyTable.selectedAlbum = nil
+        propertyTable.albumsLoaded = false
         propertyTable.albums = {}
 
         YaFotki.dropCookiesIfNeeded(propertyTable)
@@ -227,10 +227,18 @@ function YaFotki.exportDialog(viewFactory, propertyTable)
     end)
 end
 
+function YaFotki.search_album(albums, album_id)
+    for i, a in ipairs(albums) do
+        if a.value == album_id then
+            return a
+        end
+    end
+end
+
 function YaFotki.get_albums(p)
     local albums = {}
 
-    if p.selectedAlbum == nil then
+    if p.albumsLoaded == false then
         local url = string.format(albumsUrl, p.ya_login)
         local body, headers = LrHttp.get(url, p.ya_cookies)
 
@@ -240,7 +248,9 @@ function YaFotki.get_albums(p)
             end
             p.albums = albums
             if #p.albums > 0 then
-                p.selectedAlbum = p.albums[1].value
+                if YaFotki.search_album(p.albums, p.selectedAlbum) == nil then
+                    p.selectedAlbum = p.albums[1].value
+                end
             end
         else
             err('Error during retriving album list HTTP status: ' .. tostring(headers.status))
@@ -647,6 +657,7 @@ return {
         {key = 'ya_no_more_participation', default = false},
         {key = 'ya_cookies', default = nil},
         {key = 'ya_remember', default = false},
+        {key = 'selectedAlbum', default = nil},
     },
     processRenderedPhotos = YaFotki.postProcess,
     sectionsForTopOfDialog = YaFotki.exportDialog,
