@@ -194,7 +194,7 @@ function YaFotki.exportDialog(viewFactory, propertyTable)
                         },
                         f:column {
                             spacing = f:control_spacing(),
-                            f:checkbox { title = 'Publish on ya.ru', value = bind('ya_post2yaru') },
+--                            f:checkbox { title = 'Publish on ya.ru', value = bind('ya_post2yaru') },
                             f:checkbox { title = 'Disable comments', value = bind('ya_disable_comments') },
                             f:checkbox { title = 'Amateur content', value = bind('ya_mxxx') },
                         },
@@ -351,8 +351,14 @@ function YaFotki.upload(exportContext, path, photo)
                 piece_size = file_size
             end
 
-            local client_xml = '<?xml version="1.0" encoding="utf-8"?><client-upload md5="' .. md5 .. '" cookie="' .. md5 .. sid .. '"><filename>' .. fileName .. '</filename><title>' .. title .. '</title><albumId>' .. tostring(p.selectedAlbum) .. '</albumId><copyright>0</copyright><tags>' .. tags .. '</tags>' ..
-            '<post2yaru>' .. tostring(p.ya_post2yaru) .. '</post2yaru>' ..
+            local client_xml = '<?xml version="1.0" encoding="utf-8"?>' ..
+            '<client-upload md5="' .. md5 .. '" cookie="' .. md5 .. sid .. '">' ..
+            '<filename>' .. fileName .. '</filename>' ..
+            '<title>' .. title .. '</title>' ..
+            '<albumId>' .. tostring(p.selectedAlbum) .. '</albumId>' ..
+            '<copyright>0</copyright>' ..
+            '<tags>' .. tags .. '</tags>' ..
+--            '<post2yaru>' .. tostring(p.ya_post2yaru) .. '</post2yaru>' ..
             '<xxx>' .. tostring(p.ya_mxxx) .. '</xxx>' ..
             '<disable_comments>' .. tostring(p.ya_disable_comments) .. '</disable_comments>' ..
             '<hide_orig>' .. tostring(p.ya_mhide_orig) .. '</hide_orig>' ..
@@ -634,7 +640,7 @@ return {
     exportPresetFields = {
         {key = 'ya_login', default = 'You login'},
         {key = 'ya_access', default = 'public'},
-        {key = 'ya_post2yaru', default = false},
+--        {key = 'ya_post2yaru', default = false},
         {key = 'ya_disable_comments', default = false},
         {key = 'ya_mxxx', default = false},
         {key = 'ya_mhide_orig', default = true},
