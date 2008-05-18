@@ -397,6 +397,8 @@ function YaFotki.upload(exportContext, path, photo)
                 err( 'Error during upload, HTTP response: ' .. tostring(headers.status) )
             end
             debug('photo-start: ' .. result)
+            cookie = result:match('cookie = "(%x+)"')
+            debug('photo-start: cookie=' .. tostring(cookie))
 
 --            p.ya_cookies = YaFotki.extractCookie(headers)
 
@@ -412,14 +414,15 @@ function YaFotki.upload(exportContext, path, photo)
             -- PHOTO-PIECES
             mimeChunks = {
                 { name = 'query-type', value = 'photo-piece' },
---                { name = 'offset', value = tostring(offset) },
-                { name = 'cookie', value = md5 },
+                { name = 'offset', value = '0' },
+                { name = 'cookie', value = cookie },
                 { name = 'fragment', fileName = 'frag.bin', filePath = frag_path },
             }
-            mimeChunks.offset = 0
+            current_offset = 0
             source:seek('set')
             local piece_num = 1
-            while mimeChunks.offset < file_size do
+            while current_offset < file_size do
+                mimeChunks[2].value = tostring(current_offset)
                 local data = source:read(piece_size)
                 if data == nil then
                     break
@@ -442,15 +445,17 @@ function YaFotki.upload(exportContext, path, photo)
                     f:write(result)
                     f:close()
                 end
-                mimeChunks.offset = mimeChunks.offset + #data
+                current_offset = current_offset + #data
+                debug('new offset is: ' .. tostring(current_offset))
                 piece_num = piece_num + 1
             end
 
             -- PHOTO-CHECKSUM
             mimeChunks = {
                 { name = 'query-type', value = 'photo-checksum' },
-                { name = 'cookie', value = md5 },
+                { name = 'cookie', value = cookie },
                 { name = 'size', value = tostring(piece_size) },
+--                { name = 'size', value = '64000' },
             }
             debug( 'photo-checksum: ' .. table2string(mimeChunks) )
             local result, headers = LrHttp.postMultipart(url, mimeChunks, p.ya_cookies)
@@ -469,7 +474,7 @@ function YaFotki.upload(exportContext, path, photo)
             -- PHOTO-FINISH
             mimeChunks = {
                 { name = 'query-type', value = 'photo-finish' },
-                { name = 'cookie', value = md5 },
+                { name = 'cookie', value = cookie },
             }
             debug( 'photo-finish: ' .. table2string(mimeChunks) )
             local result, headers = LrHttp.postMultipart(url, mimeChunks, p.ya_cookies)
@@ -547,38 +552,30 @@ end
 
 function YaFotki.extractCookie(headers)
     local cookies = {}
-    local cookie = '$Version="0"'
+    local cookie = ''
     if headers then
         for k, v in pairs(headers) do
             if type(v) == 'table' and v.field == 'Set-Cookie' then
                 if #v.value == 22 then
                     cookies[#cookies] = cookies[#cookies] .. ' ' .. v.value
                     local parsed = YaFotki.parseCookie(cookies[#cookies])
-                    local path = nil
-                    local domain = nil
 
                     for name, value in pairs(parsed) do
-                        if name == 'domain' then
-                            domain = value
-                        else
-                            if name == 'path' then
-                                path = value
-                            else
-                                if name:lower() ~= 'expires' then
-                                    if type(value) == 'boolean' and value == true then
-                                        value = ''
-                                    end
-                                    cookie = cookie .. '; ' .. name .. '="' .. tostring(value) .. '"'
-                                    debug( '++++++++++++++++++++++ ' .. name .. ' = "' .. value .. '"')
-                                end
+                        local lower_name = name:lower()
+                        if      lower_name ~= 'path'
+                                and lower_name ~= 'domain'
+                                and lower_name ~= 'expires' then
+
+                            if type(value) == 'boolean' and value == true then
+                                value = ''
                             end
+                            if cookie == '' then
+                                cookie = name .. '=' .. tostring(value)
+                            else
+                                cookie = cookie .. '; ' .. name .. '=' .. tostring(value)
+                            end
+                            debug( '++++++++++++++++++++++ ' .. name .. ' = ' .. value .. '')
                         end
-                    end
-                    if path ~= nil then
-                        cookie = cookie .. '; $Path="' .. path .. '"'
-                    end
-                    if domain ~= nil then
-                        cookie = cookie .. '; $Domain="' .. domain .. '"'
                     end
                 else
                     cookies[#cookies + 1] = v.value
@@ -667,3 +664,7 @@ return {
     processRenderedPhotos = YaFotki.postProcess,
     sectionsForTopOfDialog = YaFotki.exportDialog,
 }
+
+--Cookie: yandexuid=21519061211141754; Virtual_id=48; yandex_login=alexander-artemenko; yandex_nickname=%c0%eb%e5%ea%f1%e0%ed%e4%f0; narod_login=alexander-artemenko; yandex_mail=alexander-artemenko; L=eFk9An8Nfkl+Q1dBblJ1e3ppdn9aRHFNJ1B/AllSBjwsBxM6Fnl4XncDTgwzODweEwAsFxd3MTUbAV4CASUjGQ==.1211141782.2914.297066.322bedf31e19ad4b1b74c18e402673e3; Session_id=1211141785.-276.0.13558447.2:31531321:18.49234.2193.6203df805306a759380816b7b5f5942d
+
+--Virtual_id="48"; yandex_fio=""; yandex_login="alexander-artemenko"; yandex_nickname="%c0%eb%e5%ea%f1%e0%ed%e4%f0"; narod_login="alexander-artemenko"; yandex_mail="alexander-artemenko"; L="e1luAnAJfE9+TltBbVdyd3hpfHpfRnhFLBE8VwtYRCo0WwctECAoUjZKGQsmMTQDHAUnRlVuKT8AU1UVBSc5GQ==.1211142342.2914.236243.56dd33aaab7f1071ae8a63282c529b36"; Session_id="1211142342.0.3.13558447.2:31531321:18.49234.59632.21155c7cedc8fbc580807862640a2d1c"
