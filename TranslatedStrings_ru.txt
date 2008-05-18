@@ -1,0 +1,4 @@
+"$$$/Yandex/Upload/Progress=Загрузка ^1 фотографий на Яндекс.Фотки"
+"$$$/Yandex/Upload/Progress/One=Загрузка одной фотографии на Яндекс.Фотки"
+"$$$/Yandex/SProvider/Title=Яндекс.Фотки"
+"$$$/Yandex/Upload/PluginInfo/Version=версия ^1"
