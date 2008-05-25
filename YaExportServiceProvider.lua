@@ -260,7 +260,7 @@ function YaFotki.get_albums(p)
                     p.selectedAlbum = p.albums[1].value
                 end
             else
-                LrDialogs.message('Can\'t to fetch an album list.', 'You don\'t have any albums or an account at the http://fotki.yandex.ru.\n\nPlease, go and create some albums (http://fotki.yandex.ru/users/' .. p.ya_login .. '/albums/add/) or register at http://fotki.yandex.ru/oferta.xml.', 'info')
+                LrDialogs.message('Невозможно получить список альбомов.', 'Или у вас нет ни одного альбома, или вы все еще не имеете аккаунта на http://fotki.yandex.ru.\n\nПожалуйста, создайте хотя бы один альбом (http://fotki.yandex.ru/users/' .. p.ya_login .. '/albums/add/) или зарегистрируйтесь на по адресу http://fotki.yandex.ru/oferta.xml.', 'info')
             end
         else
             err('Error during retriving album list HTTP status: ' .. tostring(headers.status))
@@ -358,6 +358,7 @@ function YaFotki.upload(exportContext, path, photo)
 
             local sid = YaFotki.generateSid()
             local url = postUrl .. '?post_id=' .. p.ya_login .. '.' .. sid
+
             local source = io.open(path, 'rb')
             local md5 = LrMD5.digest(source:read('*a'))
             local file_size = source:seek()
@@ -377,9 +378,9 @@ function YaFotki.upload(exportContext, path, photo)
             '<title>' .. title .. '</title>' ..
             '<albumId>' .. tostring(p.selectedAlbum) .. '</albumId>' ..
             '<copyright>0</copyright>' ..
+            '<xxx>' .. tostring(p.ya_mxxx) .. '</xxx>' ..
             '<tags>' .. tags .. '</tags>' ..
 --            '<post2yaru>' .. tostring(p.ya_post2yaru) .. '</post2yaru>' ..
-            '<xxx>' .. tostring(p.ya_mxxx) .. '</xxx>' ..
             '<disable_comments>' .. tostring(p.ya_disable_comments) .. '</disable_comments>' ..
             '<hide_orig>' .. tostring(p.ya_mhide_orig) .. '</hide_orig>' ..
             '<no_more_participation>' .. tostring(p.ya_no_more_participation) .. '</no_more_participation>' ..
@@ -390,7 +391,7 @@ function YaFotki.upload(exportContext, path, photo)
 
             local xml = io.open(xml_path, 'wb')
             xml:write(client_xml)
-            xml:flush()
+            xml:close()
 
             -- PHOTO-START
             local mimeChunks = {
@@ -410,6 +411,10 @@ function YaFotki.upload(exportContext, path, photo)
             debug('photo-start: ' .. result)
             cookie = result:match('cookie = "(%x+)"')
             debug('photo-start: cookie=' .. tostring(cookie))
+            if cookie == nil then
+                LrDialogs.message('Ошибка', 'Невозможно загрузить фотографию, пожалуйста, проверьте, что используете последнюю версию плагина и, если это так, то свяжитесь с разработчиком по email ' .. PluginContactEmail .. '.', 'error')
+                return
+            end
 
             if isDebug then
                 debug('Writing result on the disk')
@@ -417,8 +422,6 @@ function YaFotki.upload(exportContext, path, photo)
                 f:write(result)
                 f:close()
             end
-
-            xml:close()
 
             -- PHOTO-PIECES
             mimeChunks = {
