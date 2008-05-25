@@ -9,7 +9,7 @@ local PluginContactName  = 'Alexander Artemenko'
 local PluginContactEmail = 'svetlyak.40wt@gmail.com'
 local PluginUrl          = 'http://svetlyak.ru/blog/lightroom-plugins/'
 
-local isDebug = false
+local isDebug = true
 
 -- imports
 local LrHttp
@@ -242,15 +242,25 @@ function YaFotki.get_albums(p)
         local url = string.format(albumsUrl, p.ya_login)
         local body, headers = LrHttp.get(url, p.ya_cookies)
 
+        if isDebug then
+            debug('Writing album list on the disk to /tmp/album-list.xml')
+            local f = io.open('/tmp/album-list.xml', 'wt')
+            f:write(body)
+            f:close()
+        end
+
         if headers.status == 200 then
             for id, title in body:gmatch('album/(%d+)/" title="([^"]*)"') do
                 albums[#albums+1] = {title=title, value=id}
             end
             p.albums = albums
-            if #p.albums > 0 then
+            local albums_count = #albums
+            if albums_count > 0 then
                 if YaFotki.search_album(p.albums, p.selectedAlbum) == nil then
                     p.selectedAlbum = p.albums[1].value
                 end
+            else
+                LrDialogs.message('Can\'t to fetch an album list.', 'You don\'t have any albums or an account at the http://fotki.yandex.ru.\n\nPlease, go and create some albums (http://fotki.yandex.ru/users/' .. p.ya_login .. '/albums/add/) or register at http://fotki.yandex.ru/oferta.xml.', 'info')
             end
         else
             err('Error during retriving album list HTTP status: ' .. tostring(headers.status))
