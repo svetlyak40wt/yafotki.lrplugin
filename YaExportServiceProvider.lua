@@ -9,7 +9,7 @@ local PluginContactName  = 'Alexander Artemenko'
 local PluginContactEmail = 'svetlyak.40wt@gmail.com'
 local PluginUrl          = 'http://svetlyak.ru/blog/lightroom-plugins/'
 
-local isDebug = true
+local isDebug = false
 
 -- imports
 local LrHttp
