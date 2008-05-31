@@ -327,11 +327,7 @@ function YaFotki.uploadOld(exportContext, path, photo)
 end
 
 function YaFotki.generateSid()
-    local result = ''
-    for i = 1, 13 do
-        result = result .. tostring(math.random(9))
-    end
-    return result
+    return string.format('%s', os.time())
 end
 
 function YaFotki.upload(exportContext, path, photo)
@@ -357,7 +353,7 @@ function YaFotki.upload(exportContext, path, photo)
             end )
 
             local sid = YaFotki.generateSid()
-            local url = postUrl .. '?post_id=' .. p.ya_login .. '.' .. sid
+            local url = postUrl
 
             local source = io.open(path, 'rb')
             local md5 = LrMD5.digest(source:read('*a'))
@@ -368,14 +364,12 @@ function YaFotki.upload(exportContext, path, photo)
             local xml_path = LrFileUtils.chooseUniqueFileName( LrPathUtils.child(tmp_path, 'data.xml') )
             local frag_path = LrFileUtils.chooseUniqueFileName( LrPathUtils.child(tmp_path, 'frag.bin') )
             local piece_size = 64000
-            if file_size < piece_size then
-                piece_size = file_size
-            end
 
             local client_xml = '<?xml version="1.0" encoding="utf-8"?>' ..
             '<client-upload md5="' .. md5 .. '" cookie="' .. md5 .. sid .. '">' ..
             '<filename>' .. fileName .. '</filename>' ..
             '<title>' .. title .. '</title>' ..
+            '<description>' .. description .. '</description>' ..
             '<albumId>' .. tostring(p.selectedAlbum) .. '</albumId>' ..
             '<copyright>0</copyright>' ..
             '<xxx>' .. tostring(p.ya_mxxx) .. '</xxx>' ..
@@ -389,7 +383,7 @@ function YaFotki.upload(exportContext, path, photo)
 
             debug('client-xml: ' .. client_xml)
 
-            local xml = io.open(xml_path, 'wb')
+            local xml = io.open(xml_path, 'wt')
             xml:write(client_xml)
             xml:close()
 
@@ -404,7 +398,7 @@ function YaFotki.upload(exportContext, path, photo)
             debug( 'photo-start: ' .. table2string(mimeChunks) )
             debug( 'photo-start: ' .. table2string(p.ya_cookies) )
 
-            local result, headers = LrHttp.postMultipart(url, mimeChunks, p.ya_cookies)
+            local result, headers = LrHttp.postMultipart(url, mimeChunks)
             if headers and headers.status ~= 200 then
                 err( 'Error during upload, HTTP response: ' .. tostring(headers.status) )
             end
@@ -445,7 +439,7 @@ function YaFotki.upload(exportContext, path, photo)
                 frag:close()
 
                 debug( 'photo-piece: ' .. table2string(mimeChunks) )
-                local result, headers = LrHttp.postMultipart(url, mimeChunks, p.ya_cookies)
+                local result, headers = LrHttp.postMultipart(url, mimeChunks)
                 if headers and headers.status ~= 200 then
                     err( 'Error during upload, HTTP response: ' .. tostring(headers.status) )
                 end
@@ -469,7 +463,7 @@ function YaFotki.upload(exportContext, path, photo)
                 { name = 'size', value = tostring(piece_size) },
             }
             debug( 'photo-checksum: ' .. table2string(mimeChunks) )
-            local result, headers = LrHttp.postMultipart(url, mimeChunks, p.ya_cookies)
+            local result, headers = LrHttp.postMultipart(url, mimeChunks)
             if headers and headers.status ~= 200 then
                 err( 'Error during upload, HTTP response: ' .. tostring(headers.status) )
             end
@@ -488,7 +482,7 @@ function YaFotki.upload(exportContext, path, photo)
                 { name = 'cookie', value = cookie },
             }
             debug( 'photo-finish: ' .. table2string(mimeChunks) )
-            local result, headers = LrHttp.postMultipart(url, mimeChunks, p.ya_cookies)
+            local result, headers = LrHttp.postMultipart(url, mimeChunks)
             if headers and headers.status ~= 200 then
                 err( 'Error during upload, HTTP response: ' .. tostring(headers.status) )
             end
