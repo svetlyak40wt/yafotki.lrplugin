@@ -28,8 +28,8 @@ local LrDialogs = import 'LrDialogs'
 local LrErrors = import 'LrErrors'
 local LrMD5 = import 'LrMD5'
 
---local tmp_path = LrPathUtils.getStandardFilePath('temp') or '/tmp/'
-local tmp_path = LrPathUtils.getStandardFilePath( "desktop" )
+local tmp_path = LrPathUtils.getStandardFilePath('temp') or '/tmp/'
+--local tmp_path = LrPathUtils.getStandardFilePath( "desktop" )
 
 local logger = LrLogger('YaFotki')
 logger:enable('print')
