@@ -536,7 +536,7 @@ end
 
 function partition(text, sep)
     local result = {}
-    pos = text:find(sep, 1, true)
+    local pos = text:find(sep, 1, true)
     if pos == nil then
         return text, nil
     else
@@ -547,9 +547,9 @@ end
 
 function YaFotki.parseCookie(cookie)
     local result = {}
-    name_value = split(cookie, ';')
+    local name_value = split(cookie, ';')
     for i, v in ipairs(name_value) do
-        name, value = partition(strip(v, ' '), '=')
+        local name, value = partition(strip(v, ' '), '=')
         result[name] = value
     end
     return result
