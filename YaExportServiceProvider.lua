@@ -4,13 +4,12 @@
 --
 -- http://svetlyak.ru/blog/lightroom-plugins/
 --
-local PluginVersion      = '0.2.1'
+local PluginVersion      = '0.2.1rc2'
 local PluginContactName  = 'Alexander Artemenko'
 local PluginContactEmail = 'svetlyak.40wt@gmail.com'
 local PluginUrl          = 'http://svetlyak.ru/blog/lightroom-plugins/'
 
 local isDebug = false
-
 -- imports
 local LrHttp
 if isDebug then
@@ -28,6 +27,9 @@ local LrView = import 'LrView'
 local LrDialogs = import 'LrDialogs'
 local LrErrors = import 'LrErrors'
 local LrMD5 = import 'LrMD5'
+
+--local tmp_path = LrPathUtils.getStandardFilePath('temp') or '/tmp/'
+local tmp_path = LrPathUtils.getStandardFilePath( "desktop" )
 
 local logger = LrLogger('YaFotki')
 logger:enable('print')
@@ -244,7 +246,7 @@ function YaFotki.get_albums(p)
 
         if isDebug then
             debug('Writing album list on the disk to /tmp/album-list.xml')
-            local f = io.open('/tmp/album-list.xml', 'wt')
+            local f = io.open(LrPathUtils.child(tmp_path, 'album-list.xml'), 'wt')
             f:write(body)
             f:close()
         end
@@ -313,7 +315,7 @@ function YaFotki.uploadOld(exportContext, path, photo)
             local result, headers = LrHttp.postMultipart(postUrl, mimeChunks, p.ya_cookies)
             if isDebug then
                 debug('Writing result on the disk')
-                local f = io.open('/tmp/upload.html', 'wt')
+                local f = io.open(LrPathUtils.child(tmp_path, 'upload.html'), 'wt')
                 f:write(result)
                 f:close()
             end
@@ -359,8 +361,6 @@ function YaFotki.upload(exportContext, path, photo)
             local md5 = LrMD5.digest(source:read('*a'))
             local file_size = source:seek()
 
-            local tmp_path = LrPathUtils.getStandardFilePath('temp')
-            tmp_path = '/tmp/'
             local xml_path = LrFileUtils.chooseUniqueFileName( LrPathUtils.child(tmp_path, 'data.xml') )
             local frag_path = LrFileUtils.chooseUniqueFileName( LrPathUtils.child(tmp_path, 'frag.bin') )
             local piece_size = 64000
@@ -561,28 +561,24 @@ function YaFotki.extractCookie(headers)
     if headers then
         for k, v in pairs(headers) do
             if type(v) == 'table' and v.field == 'Set-Cookie' then
-                if #v.value == 22 then
-                    cookies[#cookies] = cookies[#cookies] .. ' ' .. v.value
-                    local parsed = YaFotki.parseCookie(cookies[#cookies])
+                cookies[#cookies + 1] = v.value
+                local parsed = YaFotki.parseCookie(cookies[#cookies])
 
-                    for name, value in pairs(parsed) do
-                        local lower_name = name:lower()
-                        if      lower_name ~= 'path'
-                                and lower_name ~= 'domain'
-                                and lower_name ~= 'expires' then
+                for name, value in pairs(parsed) do
+                    local lower_name = name:lower()
+                    if      lower_name ~= 'path'
+                            and lower_name ~= 'domain'
+                            and lower_name ~= 'expires' then
 
-                            if type(value) == 'boolean' and value == true then
-                                value = ''
-                            end
-                            if cookie == '' then
-                                cookie = name .. '=' .. tostring(value)
-                            else
-                                cookie = cookie .. '; ' .. name .. '=' .. tostring(value)
-                            end
+                        if type(value) == 'boolean' and value == true then
+                            value = ''
+                        end
+                        if cookie == '' then
+                            cookie = name .. '=' .. tostring(value)
+                        else
+                            cookie = cookie .. '; ' .. name .. '=' .. tostring(value)
                         end
                     end
-                else
-                    cookies[#cookies + 1] = v.value
                 end
             end
         end
@@ -596,7 +592,7 @@ function YaFotki.auth(login, password)
     local url = string.format(authUrl, login, password)
     local body, headers = LrHttp.get(url)
     if isDebug then
-        local f = io.open('/tmp/ya-auth.html', 'wt')
+        local f = io.open(LrPathUtils.child(tmp_path, 'ya-auth.html'), 'wt')
         f:write(body)
         f:close()
     end
