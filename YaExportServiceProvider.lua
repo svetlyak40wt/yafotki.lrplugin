@@ -561,23 +561,30 @@ function YaFotki.extractCookie(headers)
     if headers then
         for k, v in pairs(headers) do
             if type(v) == 'table' and v.field == 'Set-Cookie' then
-                cookies[#cookies + 1] = v.value
-                local parsed = YaFotki.parseCookie(cookies[#cookies])
+                if #v.value == 22 then
+                    cookies[#cookies] = cookies[#cookies] .. ' ' .. v.value
+                else
+                    cookies[#cookies + 1] = v.value
+                end
+            end
+        end
 
-                for name, value in pairs(parsed) do
-                    local lower_name = name:lower()
-                    if      lower_name ~= 'path'
-                            and lower_name ~= 'domain'
-                            and lower_name ~= 'expires' then
+        for index, str in ipairs(cookies) do
+            local parsed = YaFotki.parseCookie(str)
 
-                        if type(value) == 'boolean' and value == true then
-                            value = ''
-                        end
-                        if cookie == '' then
-                            cookie = name .. '=' .. tostring(value)
-                        else
-                            cookie = cookie .. '; ' .. name .. '=' .. tostring(value)
-                        end
+            for name, value in pairs(parsed) do
+                local lower_name = name:lower()
+                if      lower_name ~= 'path'
+                        and lower_name ~= 'domain'
+                        and lower_name ~= 'expires' then
+
+                    if type(value) == 'boolean' and value == true then
+                        value = ''
+                    end
+                    if cookie == '' then
+                        cookie = name .. '=' .. tostring(value)
+                    else
+                        cookie = cookie .. '; ' .. name .. '=' .. tostring(value)
                     end
                 end
             end
