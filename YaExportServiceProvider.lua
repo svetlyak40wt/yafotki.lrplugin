@@ -95,7 +95,7 @@ function YaFotki.cookiesObserver(properties, key, newValue)
         local login = ''
         for i, c in ipairs(newValue) do
             trace('Cookie value: ' .. c.value)
-            local parsed = YaFotki.parseCookie(c.value)
+            local parsed = LrHttp.parseCookie(c.value)
             if parsed.yandex_login ~= nil then
                 login = parsed.yandex_login
                 break
@@ -545,16 +545,6 @@ function partition(text, sep)
     return result
 end
 
-function YaFotki.parseCookie(cookie)
-    local result = {}
-    local name_value = split(cookie, ';')
-    for i, v in ipairs(name_value) do
-        local name, value = partition(strip(v, ' '), '=')
-        result[name] = value
-    end
-    return result
-end
-
 function YaFotki.extractCookie(headers)
     local cookies = {}
     local cookie = ''
@@ -570,7 +560,7 @@ function YaFotki.extractCookie(headers)
         end
 
         for index, str in ipairs(cookies) do
-            local parsed = YaFotki.parseCookie(str)
+            local parsed = LrHttp.parseCookie(str)
 
             for name, value in pairs(parsed) do
                 local lower_name = name:lower()
