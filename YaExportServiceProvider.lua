@@ -4,7 +4,7 @@
 --
 -- http://svetlyak.ru/blog/lightroom-plugins/
 --
-local PluginVersion      = '0.2.2'
+local PluginVersion      = '0.2.3'
 local PluginContactName  = 'Alexander Artemenko'
 local PluginContactEmail = 'svetlyak.40wt@gmail.com'
 local PluginUrl          = 'http://svetlyak.ru/blog/lightroom-plugins/'
