@@ -270,64 +270,6 @@ function YaFotki.get_albums(p)
     end
 end
 
-function YaFotki.uploadOld(exportContext, path, photo)
-    LrFunctionContext.callWithContext('signupDialog', function(context)
-        LrDialogs.attachErrorDialogToFunctionContext(context)
-
-        local fileName = LrPathUtils.leafName(path)
-        local p = exportContext.propertyTable
-        debug('Uploading ' .. path .. ' to the fotki.yandex.ru')
-
-        if p.ya_cookies then
-            debug('Preparing upload data')
-
-            local title, description, tags
-
-            photo.catalog:withCatalogDo( function()
-                title = photo:getFormattedMetadata('title')
-                if not title or #title == 0 then
-                    title = fileName
-                end
-                description = photo:getFormattedMetadata('caption')
-                tags = photo:getFormattedMetadata('keywordTags')
-            end )
-
-            local mimeChunks = {
-                { name = 'image_source', fileName = fileName, filePath = path, contentType = 'application/octet-stream' },
-                { name = 'retpage', value = uploadRetPath },
-                { name = 'title', value = title },
-                { name = 'description', value = description },
-                { name = 'tags', value = tags },
-
-                -- settings from the export dialog
-                { name = 'access', value = p.ya_access },
-            }
-            if p.ya_post2yaru == true then table.insert(mimeChunks, { name = 'post2yaru', value = 'on' }) end
-            if p.ya_disable_comments == true then table.insert(mimeChunks, { name = 'disable_comments', value = 'on' }) end
-            if p.ya_mxxx == true then table.insert(mimeChunks, { name = 'mxxx', value = 'on' }) end
-            if p.ya_mhide_orig == true then table.insert(mimeChunks, { name = 'mhide_orig', value = 'on' }) end
-            if p.ya_no_more_participation == true then table.insert(mimeChunks, { name = 'no_more_participation', value = 'on' }) end
---            if p.selectedAlbum ~= nil then table.insert(mimeChunks, { name = 'album', value = tostring(p.selectedAlbum) }) end
-
-            debug( 'Upload data: ' .. table2string(mimeChunks) )
-
-            debug('Uploading')
-            local result, headers = LrHttp.postMultipart(postUrl, mimeChunks, p.ya_cookies)
-            if isDebug then
-                debug('Writing result on the disk')
-                local f = io.open(LrPathUtils.child(tmp_path, 'upload.html'), 'wt')
-                f:write(result)
-                f:close()
-            end
-            if headers.status ~= 200 then
-                err( 'Error during upload, HTTP response: ' .. tostring(headers.status) )
-            end
-        else
-            debug('No cookies. Are you logged in?')
-        end
-    end)
-end
-
 function YaFotki.generateSid()
     return string.format('%s', os.time())
 end
