@@ -5,7 +5,7 @@ return {
     LrExportServiceProvider = {
         title = LOC "$$$/Yandex/SProvider/Title=Yandex.Fotki",
         file  = "YaExportServiceProvider.lua",
-        builtInPresetsDir = "Yandex",
+        builtInPresetsDir = "presets",
         image = 'fotki-logo.png',
     },
 }
