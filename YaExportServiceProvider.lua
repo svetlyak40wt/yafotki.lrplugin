@@ -112,13 +112,11 @@ function YaFotki.newAlbumDialog(propertyTable)
             context:addFailureHandler(function()
                 err('Can\'t create new album')
              end)
-            album_id = YaFotki.createNewAlbum(p.ya_new_album_name)
+            local album_id = YaFotki.createNewAlbum(p.ya_new_album_name)
             local albums = p.albums
             albums[#albums+1] = {title=p.ya_new_album_name, value=album_id}
             p.albums = albums
             p.selectedAlbum = album_id
-
-            debug('albums=' .. table2string(p.albums))
         end)
     end
 end
@@ -188,6 +186,7 @@ function YaFotki.cookiesObserver(properties, key, newValue)
         end)
 
         properties.loginText = 'Logged in as ' .. login
+        properties.newAlbumButtonEnabled = true
         properties.loginButtonText = 'Log out'
         properties.loginButtonAction = function(button)
             debug('cookies dropped because "logout action"')
@@ -196,6 +195,7 @@ function YaFotki.cookiesObserver(properties, key, newValue)
         properties.LR_canExport = true
     else
         properties.loginText = 'Not logged in'
+        properties.newAlbumButtonEnabled = false
         properties.loginButtonText = 'Log in'
         properties.loginButtonAction = function(button)
             LrFunctionContext.callWithContext('signupDialog', function( context ) 
@@ -259,6 +259,7 @@ function YaFotki.exportDialog(viewFactory, propertyTable)
                                 YaFotki.newAlbumDialog(propertyTable)
                             end )
                         end,
+                        enabled = bind('newAlbumButtonEnabled'),
                     },
                 },
                 f:group_box {
