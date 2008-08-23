@@ -98,8 +98,12 @@ function YaFotki.newAlbumDialog(propertyTable)
         spacing = f:control_spacing(),
         bind_to_object = propertyTable,
         f:row {
-            f:static_text { title = 'New Album\'s name', width = LrView.share('new_album_label') },
-            f:edit_field {value = bind('ya_new_album_name') },
+            f:static_text { title = 'Title', width = LrView.share('new_album_label') },
+            f:edit_field {value = bind('ya_new_album_title') },
+        },
+        f:row {
+            f:static_text { title = 'Description', width = LrView.share('new_album_label') },
+            f:edit_field {value = bind('ya_new_album_description'), height_in_lines=5 },
         },
     }
     local result = LrDialogs.presentModalDialog{
@@ -112,16 +116,18 @@ function YaFotki.newAlbumDialog(propertyTable)
             context:addFailureHandler(function()
                 err('Can\'t create new album')
              end)
-            local album_id = YaFotki.createNewAlbum(p.ya_new_album_name)
+            local album_id = YaFotki.createNewAlbum(
+                                    p.ya_new_album_title,
+                                    p.ya_new_album_description)
             local albums = p.albums
-            albums[#albums+1] = {title=p.ya_new_album_name, value=album_id}
+            albums[#albums+1] = {title=p.ya_new_album_title, value=album_id}
             p.albums = albums
             p.selectedAlbum = album_id
         end)
     end
 end
 
-function YaFotki.createNewAlbum(album_name)
+function YaFotki.createNewAlbum(album_name, description)
     debug('Creating new album with name '..album_name)
 
     local url = postUrl
@@ -130,7 +136,7 @@ function YaFotki.createNewAlbum(album_name)
     '<client-upload name="create-album">' ..
     '<album access="private">' ..
     '<title>' .. album_name .. '</title>' ..
-    '<description/>' ..
+    '<description>' .. description .. '</description>' ..
     '</album>' ..
     '</client-upload>'
 
