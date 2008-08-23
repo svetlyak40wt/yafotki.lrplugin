@@ -27,6 +27,7 @@ local LrView = import 'LrView'
 local LrDialogs = import 'LrDialogs'
 local LrErrors = import 'LrErrors'
 local LrMD5 = import 'LrMD5'
+local LrXml = import 'LrXml'
 
 local tmp_path = LrPathUtils.getStandardFilePath('temp') or '/tmp/'
 --local tmp_path = LrPathUtils.getStandardFilePath( "desktop" )
@@ -85,6 +86,85 @@ function YaFotki.signupDialog(propertyTable)
             end
             p.ya_cookies = cookies
         end)
+    end
+end
+
+function YaFotki.newAlbumDialog(propertyTable)
+    local f = LrView.osFactory()
+    local bind = LrView.bind
+    local p = propertyTable
+
+    local contents = f:column {
+        spacing = f:control_spacing(),
+        bind_to_object = propertyTable,
+        f:row {
+            f:static_text { title = 'New Album\'s name', width = LrView.share('new_album_label') },
+            f:edit_field {value = bind('ya_new_album_name') },
+        },
+    }
+    local result = LrDialogs.presentModalDialog{
+        title = 'Create new album',
+        contents = contents,
+    }
+    if result == 'ok' then
+        LrFunctionContext.postAsyncTaskWithContext('YandexAuth', function(context)
+            LrDialogs.attachErrorDialogToFunctionContext(context)
+            context:addFailureHandler(function()
+                err('Can\'t create new album')
+             end)
+            album_id = YaFotki.createNewAlbum(p.ya_new_album_name)
+            local albums = p.albums
+            albums[#albums+1] = {title=p.ya_new_album_name, value=album_id}
+            p.albums = albums
+            p.selectedAlbum = album_id
+
+            debug('albums=' .. table2string(p.albums))
+        end)
+    end
+end
+
+function YaFotki.createNewAlbum(album_name)
+    debug('Creating new album with name '..album_name)
+
+    local url = postUrl
+    local client_xml = '<?xml version="1.0" encoding="utf-8"?>' ..
+
+    '<client-upload name="create-album">' ..
+    '<album access="private">' ..
+    '<title>' .. album_name .. '</title>' ..
+    '<description/>' ..
+    '</album>' ..
+    '</client-upload>'
+
+    local xml_path = LrFileUtils.chooseUniqueFileName( LrPathUtils.child(tmp_path, 'data.xml') )
+    local xml = io.open(xml_path, 'wt')
+    xml:write(client_xml)
+    xml:close()
+
+    local mimeChunks = {
+        { name = 'query-type', value = 'photo-command' },
+        { name = 'command-xml', fileName = 'data.xml', filePath = xml_path, contentType = 'text/xml' },
+    }
+
+    local result, headers = LrHttp.postMultipart(url, mimeChunks)
+    if headers and headers.status ~= 200 then
+        err( 'Error during new album creation, HTTP response: ' .. tostring(headers.status) )
+    end
+
+    local xml = LrXml.parseXml(result)
+    local child_count = xml:childCount()
+    local i = 1
+
+    while i <= child_count do
+        e = xml:childAtIndex(i)
+        if e:name() == 'album' then
+            attrib = e:attributes()
+            if attrib ~= nil then
+                debug('album attrib' .. table2string(attrib))
+                debug('new album\'s id: ' .. tostring(attrib.id.value))
+                return attrib.id.value
+            end
+        end
     end
 end
 
@@ -170,6 +250,15 @@ function YaFotki.exportDialog(viewFactory, propertyTable)
                         value = bind('selectedAlbum'),
                         items = bind('albums'),
                         width_in_chars = 30,
+                    },
+                    f:push_button {
+                        title = 'New album',
+                        action = function(button)
+                            LrFunctionContext.callWithContext('newAlbumDialog', function( context )
+                                LrDialogs.attachErrorDialogToFunctionContext(context)
+                                YaFotki.newAlbumDialog(propertyTable)
+                            end )
+                        end,
                     },
                 },
                 f:group_box {
