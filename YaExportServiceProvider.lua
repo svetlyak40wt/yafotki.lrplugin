@@ -136,7 +136,7 @@ function YaFotki.createNewAlbum(album_name, description)
     '<client-upload name="create-album">' ..
     '<album access="private">' ..
     '<title>' .. album_name .. '</title>' ..
-    '<description>' .. description .. '</description>' ..
+    '<description>' .. (description or '') .. '</description>' ..
     '</album>' ..
     '</client-upload>'
 
