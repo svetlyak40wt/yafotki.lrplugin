@@ -225,6 +225,12 @@ function YaFotki.exportDialog(viewFactory, propertyTable)
         propertyTable.albumsLoaded = false
         propertyTable.albums = {}
 
+        p = propertyTable
+        debug('property table is: ' .. table2string(propertyTable))
+        debug('ya_remember: ' .. tostring(p.ya_remember))
+        debug('ya_password: ' .. tostring(p.ya_password))
+        debug('ya_cookies: ' .. tostring(p.ya_cookies))
+
         YaFotki.dropCookiesIfNeeded(propertyTable)
         YaFotki.cookiesObserver(propertyTable, 'ya_cookies', propertyTable.ya_cookies)
         propertyTable:addObserver('ya_cookies', YaFotki.cookiesObserver)
